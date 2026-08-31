@@ -1,7 +1,6 @@
 import dns_trace
 
-ROOT_SERVERS = {"name": "a.root-servers.net", "ipv4": "198.41.0.4"}
-
+root_sever_ip = "198.41.0.4"
 domain = "www.example.com."
-response = dns_trace.query_dns(domain, ROOT_SERVERS["ipv4"])
-print(response)
+trace = dns_trace.trace_domain(domain, root_sever_ip)
+dns_trace.print_trace(domain, trace)
