@@ -49,18 +49,43 @@ def extract_ip(response: dns.message.Message) -> list[str]:
 
     return ip_list
 
-def get_domain_ip(domain: str, root_server_ip: str) -> list[str]:
+def trace_domain(domain: str, root_server_ip: str) -> list[dict[str, str]]:
+
     server_ip = root_server_ip
+    traces: list[dict] = [] # DNS 이동 과정 기록
+
     while True:
         response = query_dns(domain, server_ip)
+        current = {
+            "server_ip": server_ip, 
+            "next_server_ip": "", 
+            "final_ips": [],} 
 
         if response.rcode() != dns.rcode.NOERROR:
             raise ValueError("DNS 서버로부터 오류 반환")
 
         if response.answer:
-            return extract_ip(response)
+            current["final_ips"] = extract_ip(response)
+            traces.append(current)
+            return traces
         else:
             server_ip = extract_ip(response)[0]
+            current["next_server_ip"] = server_ip
+            traces.append(current)
+
+def print_trace(domain: str, traces: list[dict]) -> None:
+    lines = [f"조회 도메인: {domain}", ""]
+
+    for step in traces:
+        lines.append(f"현재 서버: {step['server_ip']}")
+
+        if not step["next_server_ip"]:
+            lines.append(f"도메인 IP: {step['final_ips']}")
+        else:
+            lines.append(f"다음 서버: {step['next_server_ip']}")
+            lines.append("")
+
+    print("\n".join(lines))  
 
 if __name__ == "__main__":
     domain = "www.example.com."
