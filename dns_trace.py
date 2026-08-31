@@ -1,6 +1,8 @@
 import dns.message
 import dns.query
 import dns.flags
+import dns.rdatatype
+import dns.rcode
 
 def query_dns(domain:str, dns_server_ip: str) -> dns.message.Message:
 
@@ -25,6 +27,40 @@ def query_dns(domain:str, dns_server_ip: str) -> dns.message.Message:
         response = dns.query.tcp(query_message, dns_server_ip, timeout=3.0)
 
     return response
+
+def extract_ip(response: dns.message.Message) -> list[str]:
+    # response로부터 ip를 하나 추출해 반환하는 함수
+    
+    ip_list = []
+
+    # answer에 ip가 들어있을 경우
+    if response.answer:
+        for rrset in response.answer:
+            if rrset.rdtype == dns.rdatatype.A: # CNAME아 아닌 A 레코드일 경우만
+                for rdata in rrset:
+                    ip_list.append(str(rdata))
+
+    # answer가 비어있을 경우 (아직 DNS 서버 IP 반환)
+    else:
+        for rrset in response.additional:
+            if rrset.rdtype == dns.rdatatype.A:
+                ip_list.append(str(rrset[0])) # 후보 중 하나만 선택
+                break
+
+    return ip_list
+
+def get_domain_ip(domain: str, root_server_ip: str) -> list[str]:
+    server_ip = root_server_ip
+    while True:
+        response = query_dns(domain, server_ip)
+
+        if response.rcode() != dns.rcode.NOERROR:
+            raise ValueError("DNS 서버로부터 오류 반환")
+
+        if response.answer:
+            return extract_ip(response)
+        else:
+            server_ip = extract_ip(response)[0]
 
 if __name__ == "__main__":
     domain = "www.example.com."
