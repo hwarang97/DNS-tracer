@@ -106,7 +106,7 @@ def print_trace(domain: str, traces: list[dict]) -> None:
         lines.append(f"현재 서버: {step['server_ip']}")
 
         if not step["next_server_ip"]:
-            lines.append(f"도메인 IP: {step['final_ips']}")
+            lines.append(f"직접 조회한 도메인 IP: {step['final_ips']}")
         else:
             lines.append(f"다음 서버: {step['next_server_ip']}")
             lines.append("")

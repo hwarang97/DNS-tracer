@@ -9,4 +9,4 @@ dns_trace.print_trace(domain, trace)
 
 # 윈도우에서 DSN query 전송
 system_ips = dns_trace.resolve_domain_ipv4_with_windows(domain)
-print(system_ips)
+print(f"윈도우에서 조회한 도메인 IP: {system_ips}")
