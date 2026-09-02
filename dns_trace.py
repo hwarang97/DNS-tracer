@@ -1,8 +1,34 @@
+import socket
+
 import dns.message
 import dns.query
 import dns.flags
 import dns.rdatatype
 import dns.rcode
+
+
+def resolve_domain_ipv4_with_windows(domain: str) -> list[str]:
+    """Windows의 일반 이름 조회로 도메인의 IPv4 주소를 반환한다."""
+    if not domain:
+        raise ValueError("도메인 매개변수가 비어있습니다!")
+
+    normalized_domain = domain.rstrip(".")
+    if not normalized_domain:
+        raise ValueError("도메인 매개변수가 비어있습니다!")
+
+    results = socket.getaddrinfo(
+        normalized_domain,
+        None,
+        family=socket.AF_INET,
+    )
+
+    ip_list = []
+    for _, _, _, _, sockaddr in results:
+        ip = sockaddr[0]
+        if ip not in ip_list:
+            ip_list.append(ip)
+
+    return ip_list
 
 def query_dns(domain:str, dns_server_ip: str) -> dns.message.Message:
 
@@ -80,7 +106,7 @@ def print_trace(domain: str, traces: list[dict]) -> None:
         lines.append(f"현재 서버: {step['server_ip']}")
 
         if not step["next_server_ip"]:
-            lines.append(f"도메인 IP: {step['final_ips']}")
+            lines.append(f"직접 조회한 도메인 IP: {step['final_ips']}")
         else:
             lines.append(f"다음 서버: {step['next_server_ip']}")
             lines.append("")
